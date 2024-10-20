@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forex by Mentor</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <link rel="shortcut icon" href="./NextWave Tech Solutions Logo.svg" type="image/x-icon">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary-color: #10a37f;
+      --secondary-color: #1a7f64;
+      --background-color: #f7f7f8;
+      --text-color: #353740;
+      --card-color: #ffffff;
+      --input-bg: #f0f0f0;
+      --border-color: #e5e5e5;
+    }
+
+    body {
+      background-color: var(--background-color);
+      font-family: 'Inter', sans-serif;
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+    }
+
+    .container {
+      max-width: 800px;
+    }
+
+    .card {
+      background: var(--card-color);
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-custom {
+      background-color: var(--primary-color);
+      border: none;
+      color: white;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 4px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-custom:hover {
+      background-color: var(--secondary-color);
+      transform: translateY(-2px);
+    }
+
+    h1 {
+      color: var(--primary-color);
+      font-weight: 600;
+      margin-bottom: 30px;
+    }
+
+    .form-control {
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-color);
+      padding: 10px 15px;
+    }
+
+    .form-control:focus {
+      box-shadow: 0 0 0 2px rgba(16, 163, 127, 0.2);
+      border-color: var(--primary-color);
+    }
+
+    .form-label {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    #results {
+      background-color: var(--input-bg);
+      border-radius: 4px;
+      padding: 20px;
+      margin-top: 30px;
+    }
+
+    #results p {
+      margin-bottom: 10px;
+    }
+
+    #results strong {
+      color: var(--primary-color);
+    }
+
+    @media (max-width: 768px) {
+      .container { padding: 0 20px; }
+      .card { padding: 20px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container my-5">
+    <h1 class="text-center">Forex by Mentor</h1>
+    <div class="row justify-content-center">
+      <div class="col-lg-8 col-md-10">
+        <div class="card p-4">
+          <form id="forexForm">
+            <div class="mb-4">
+              <label for="balance" class="form-label">Account Balance ($)</label>
+              <input type="number" id="balance" class="form-control" placeholder="Enter your balance" required>
+            </div>
+
+            <div class="mb-4">
+              <label for="numTrades" class="form-label">Number of SL Trades</label>
+              <input type="number" id="numTrades" class="form-control" placeholder="How many trades per day?" required>
+            </div>
+
+            <div class="mb-4">
+              <label for="pips" class="form-label">SL on Single Trade (Pips)</label>
+              <input type="number" id="pips" class="form-control" placeholder="Enter SL pips" required>
+            </div>
+
+            <button type="submit" class="btn btn-custom w-100 mt-4">Calculate Risk & Lot Size</button>
+          </form>
+
+          <div id="results" class="mt-4" style="display: none;">
+            <p><strong>Each Trade Risk:</strong> $<span id="tradeRisk"></span></p>
+            <p><strong>Recommended Lot Size:</strong> <span id="lotSize"></span></p>
+            <p><strong>Total Risk on Trade:</strong> $<span id="totalRisk"></span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS and Popper.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.7/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"></script>
+
+  <script>
+    function getRecommendedLotSize(rawLotSize) {
+      if (rawLotSize < 0.1) {
+        return Math.floor(rawLotSize * 100) / 100; // Set 1: {0.01 to 0.09}
+      } else if (rawLotSize < 1) {
+        return (Math.floor(rawLotSize * 10) / 10).toFixed(1); // Set 2: {0.10 to 0.90}
+      } else {
+        return parseFloat(rawLotSize.toFixed(1)); // Set 3: {1.00, 1.10, ..., 100.00}
+      }
+    }
+
+    document.getElementById('forexForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const balance = parseFloat(document.getElementById('balance').value);
+      const numTrades = parseInt(document.getElementById('numTrades').value);
+      const pips = parseFloat(document.getElementById('pips').value);
+
+      const eachTradeRiskUSD = ((balance * 2) / 100) / numTrades;
+
+      // Calculate lot size using the new formula
+      let rawLotSize = eachTradeRiskUSD / (100 * ((5 + pips) / 10));
+      let recommendedLotSize = getRecommendedLotSize(rawLotSize);
+
+      // Calculate total risk using the provided formula
+      let totalRisk = (recommendedLotSize * 100 * ((5 + pips) / 10)).toFixed(2);
+
+      // Ensure total risk doesn't exceed each trade risk
+      while (parseFloat(totalRisk) > eachTradeRiskUSD) {
+        rawLotSize -= 0.01;
+        recommendedLotSize = getRecommendedLotSize(rawLotSize);
+        totalRisk = (recommendedLotSize * 100 * ((5 + pips) / 10)).toFixed(2);
+      }
+
+      document.getElementById('tradeRisk').textContent = eachTradeRiskUSD.toFixed(2);
+      document.getElementById('lotSize').textContent = recommendedLotSize;
+      document.getElementById('totalRisk').textContent = totalRisk;
+
+      document.getElementById('results').style.display = 'block';
+    });
+  </script>
+</body>
+</html>
